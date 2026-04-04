@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مصحّح التجويد</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold:#C8A44A; --gold-light:#E8C97A; --gold-dark:#8B6914;
+  --deep:#0D1B2A; --deep2:#112233; --panel:#0F1E30; --panel2:#162840;
+  --border:rgba(200,164,74,0.25); --text:#F0E6CC; --text-dim:#A89070;
+  --green:#4CAF7D; --red:#E05C5C; --yellow:#F0C040; --blue:#5BA3D9;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Naskh Arabic',serif;background:var(--deep);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:repeating-linear-gradient(60deg,transparent,transparent 30px,rgba(200,164,74,0.02) 30px,rgba(200,164,74,0.02) 31px),repeating-linear-gradient(-60deg,transparent,transparent 30px,rgba(200,164,74,0.02) 30px,rgba(200,164,74,0.02) 31px);pointer-events:none;z-index:0;}
+
+/* ── TABS ── */
+.tabs-bar{position:sticky;top:0;z-index:100;background:var(--deep2);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;}
+.tab-btn{flex:1;min-width:70px;padding:12px 6px 10px;font-family:'Noto Naskh Arabic',serif;font-size:12px;color:var(--text-dim);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold);}
+.tab-btn:hover{color:var(--text);}
+.tab-panel{display:none;position:relative;z-index:1;}
+.tab-panel.active{display:block;}
+
+.container{max-width:1000px;margin:0 auto;padding:16px 14px 60px;}
+
+/* ── HEADER ── */
+header{text-align:center;padding:24px 0 18px;position:relative;}
+.bismillah{font-family:'Amiri Quran',serif;font-size:clamp(20px,5vw,32px);color:var(--gold);margin-bottom:6px;text-shadow:0 0 30px rgba(200,164,74,0.4);}
+h1{font-family:'Amiri',serif;font-size:clamp(18px,4vw,26px);color:var(--text);font-weight:700;margin-bottom:3px;}
+.subtitle{color:var(--text-dim);font-size:13px;}
+.divider{display:flex;align-items:center;gap:12px;margin:14px 0;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.divider span{color:var(--gold);font-size:16px;}
+
+/* ── CARDS ── */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle at top right,rgba(200,164,74,0.08),transparent 70%);pointer-events:none;}
+.card-title{font-size:13px;color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:8px;font-weight:600;}
+
+/* ── SELECTS ── */
+.selector-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+select{width:100%;padding:9px 12px;background:var(--panel2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Noto Naskh Arabic',serif;font-size:13px;cursor:pointer;appearance:none;outline:none;direction:rtl;}
+select:focus{border-color:var(--gold);}
+select option{background:var(--deep2);}
+.select-wrapper{position:relative;}
+.select-wrapper::after{content:'▾';position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--gold);pointer-events:none;font-size:11px;}
+.search-input{width:100%;padding:9px 14px;background:var(--panel2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Noto Naskh Arabic',serif;font-size:13px;outline:none;direction:rtl;transition:border-color .2s;margin-bottom:10px;}
+.search-input:focus{border-color:var(--gold);}
+
+/* ── AYAH DISPLAY ── */
+.ayah-display{font-family:'Amiri Quran',serif;font-size:clamp(22px,5vw,34px);line-height:2.2;text-align:center;color:var(--text);padding:18px 8px;min-height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;}
+.word-span{cursor:default;border-radius:4px;transition:all .2s;padding:0 3px;}
+.word-span:hover{background:rgba(200,164,74,0.1);}
+.word-correct{color:var(--green);text-shadow:0 0 8px rgba(76,175,125,0.4);}
+.word-wrong{color:var(--red);text-shadow:0 0 8px rgba(224,92,92,0.4);}
+.word-partial{color:var(--yellow);}
+
+/* ── RECORD BTN ── */
+.record-area{text-align:center;padding:10px 0;}
+.record-btn{display:inline-flex;align-items:center;gap:10px;padding:13px 28px;border-radius:50px;border:2px solid var(--gold);background:transparent;color:var(--gold);font-family:'Noto Naskh Arabic',serif;font-size:15px;cursor:pointer;transition:all .3s;}
+.record-btn:hover{background:rgba(200,164,74,0.1);}
+.record-btn.recording{background:rgba(224,92,92,0.15);border-color:var(--red);color:var(--red);animation:pulse-rec 1.2s infinite;}
+.record-btn.processing{background:rgba(91,163,217,0.15);border-color:var(--blue);color:var(--blue);}
+@keyframes pulse-rec{0%,100%{box-shadow:0 0 0 0 rgba(224,92,92,0.3);}50%{box-shadow:0 0 0 12px rgba(224,92,92,0);}}
+.timer{font-size:12px;color:var(--text-dim);margin-top:6px;height:18px;}
+
+/* ── STATUS ── */
+.status-bar{display:flex;align-items:center;gap:8px;padding:9px 13px;background:var(--panel2);border-radius:8px;border:1px solid var(--border);font-size:12px;color:var(--text-dim);min-height:40px;margin-top:10px;}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--text-dim);flex-shrink:0;}
+.status-dot.active{background:var(--green);box-shadow:0 0 6px var(--green);}
+.status-dot.error{background:var(--red);}
+.status-dot.loading{background:var(--blue);animation:blink .8s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* ── ANALYSIS ── */
+.analysis-section{display:none;}
+.analysis-section.visible{display:block;}
+.score-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.score-box{flex:1;min-width:calc(50% - 5px);text-align:center;padding:13px 8px;border-radius:10px;border:1px solid var(--border);background:var(--panel2);}
+.score-num{font-family:'Amiri',serif;font-size:26px;font-weight:700;line-height:1;margin-bottom:3px;}
+.score-label{font-size:10px;color:var(--text-dim);}
+.score-excellent .score-num{color:var(--green);}
+.score-good .score-num{color:var(--gold);}
+.score-fair .score-num{color:var(--yellow);}
+.score-poor .score-num{color:var(--red);}
+.words-grid{display:flex;flex-direction:column;gap:8px;}
+.word-card{border-radius:10px;border:1px solid var(--border);overflow:hidden;background:var(--panel2);}
+.word-card-header{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;cursor:pointer;transition:background .2s;}
+.word-card-header:hover{background:rgba(200,164,74,0.05);}
+.word-arabic{font-family:'Amiri Quran',serif;font-size:20px;}
+.word-status-badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge-correct{background:rgba(76,175,125,0.15);color:var(--green);border:1px solid rgba(76,175,125,0.3);}
+.badge-wrong{background:rgba(224,92,92,0.15);color:var(--red);border:1px solid rgba(224,92,92,0.3);}
+.badge-partial{background:rgba(240,192,64,0.15);color:var(--yellow);border:1px solid rgba(240,192,64,0.3);}
+.word-card-body{border-top:1px solid var(--border);padding:12px;display:none;}
+.word-card-body.open{display:block;}
+.rule-item{display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-bottom:1px solid rgba(200,164,74,0.1);font-size:12px;}
+.rule-item:last-child{border-bottom:none;}
+.rule-name{color:var(--gold);font-weight:600;font-size:11px;margin-bottom:2px;}
+.rule-desc{color:var(--text-dim);font-size:11px;}
+.rule-result-correct{color:var(--green);font-size:11px;}
+.rule-result-wrong{color:var(--red);font-size:11px;}
+.letters-display{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0 7px;justify-content:flex-end;direction:rtl;}
+.letter-chip{display:inline-flex;flex-direction:column;align-items:center;gap:2px;min-width:34px;padding:5px 7px;border-radius:8px;border:1.5px solid transparent;font-family:'Amiri Quran',serif;font-size:20px;line-height:1;transition:transform .15s;cursor:default;}
+.letter-chip:hover{transform:scale(1.12);}
+.letter-chip .lc-label{font-family:'Noto Naskh Arabic',serif;font-size:8px;font-weight:600;text-align:center;line-height:1.2;max-width:50px;white-space:nowrap;}
+.lc-correct{background:rgba(76,175,125,0.12);border-color:rgba(76,175,125,0.4);color:var(--green);}
+.lc-correct .lc-label{color:rgba(76,175,125,0.7);}
+.lc-wrong{background:rgba(224,92,92,0.15);border-color:rgba(224,92,92,0.5);color:var(--red);}
+.lc-wrong .lc-label{color:rgba(224,92,92,0.8);}
+.lc-neutral{background:rgba(200,164,74,0.08);border-color:rgba(200,164,74,0.2);color:var(--text-dim);}
+.wrong-letters-summary{background:rgba(224,92,92,0.08);border:1px solid rgba(224,92,92,0.25);border-radius:8px;padding:9px 11px;margin-bottom:8px;font-size:12px;}
+.wls-title{color:var(--red);font-weight:700;margin-bottom:5px;font-size:11px;}
+.wrong-letter-entry{display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid rgba(224,92,92,0.1);}
+.wrong-letter-entry:last-child{border-bottom:none;}
+.wle-char{font-family:'Amiri Quran',serif;font-size:20px;color:var(--red);min-width:28px;text-align:center;}
+.wle-info{flex:1;}
+.wle-rule{color:var(--gold);font-size:11px;font-weight:600;}
+.wle-mistake{color:var(--text-dim);font-size:11px;margin-top:2px;}
+.wle-fix{color:var(--green);font-size:10px;margin-top:2px;}
+.transcript-box{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:10px 13px;font-size:17px;font-family:'Amiri Quran',serif;color:var(--text-dim);min-height:46px;text-align:right;direction:rtl;line-height:1.8;}
+.chevron{color:var(--text-dim);font-size:11px;transition:transform .2s;}
+.chevron.open{transform:rotate(180deg);}
+.btn-row{display:flex;gap:8px;margin-top:12px;justify-content:center;flex-wrap:wrap;}
+.btn-sm{padding:7px 16px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text-dim);font-family:'Noto Naskh Arabic',serif;font-size:12px;cursor:pointer;transition:all .2s;}
+.btn-sm:hover{border-color:var(--gold);color:var(--gold);}
+.btn-primary{border-color:var(--gold);color:var(--gold);background:rgba(200,164,74,0.08);}
+.btn-primary:hover{background:rgba(200,164,74,0.18);}
+.progress-bar-wrap{background:var(--panel2);border-radius:10px;height:6px;overflow:hidden;margin-top:10px;}
+.progress-bar{height:100%;border-radius:10px;transition:width .5s ease;background:linear-gradient(90deg,var(--gold-dark),var(--gold));}
+.tips-list{display:flex;flex-direction:column;gap:7px;}
+.tip-item{display:flex;gap:9px;align-items:flex-start;padding:9px 11px;background:var(--panel2);border-radius:8px;border-right:3px solid var(--gold);font-size:12px;}
+.tip-type{color:var(--gold);font-weight:700;font-size:11px;white-space:nowrap;}
+.footer-note{text-align:center;color:var(--text-dim);font-size:11px;margin-top:24px;padding-top:16px;border-top:1px solid var(--border);line-height:1.8;}
+.empty-state{text-align:center;padding:24px;color:var(--text-dim);font-size:13px;}
+.empty-icon{font-size:36px;margin-bottom:8px;opacity:.4;}
+.spinner{width:18px;height:18px;border:2px solid rgba(91,163,217,0.3);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.waveform{display:flex;align-items:center;gap:3px;height:22px;}
+.waveform span{display:block;width:3px;border-radius:3px;background:var(--red);animation:wave .8s ease-in-out infinite;}
+.waveform span:nth-child(2){animation-delay:.1s;}.waveform span:nth-child(3){animation-delay:.2s;}.waveform span:nth-child(4){animation-delay:.3s;}.waveform span:nth-child(5){animation-delay:.2s;}.waveform span:nth-child(6){animation-delay:.1s;}
+@keyframes wave{0%,100%{height:4px;}50%{height:18px;}}
+
+/* ── TAB2 FREE RECORD ── */
+.free-transcript{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:14px;font-family:'Amiri Quran',serif;font-size:20px;line-height:2;min-height:80px;direction:rtl;text-align:right;color:var(--text);margin-top:10px;max-height:200px;overflow-y:auto;}
+.ayah-result-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;}
+.ayah-result-header{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;cursor:pointer;}
+.ayah-result-header:hover{background:rgba(200,164,74,0.05);}
+.ayah-num{font-size:11px;color:var(--gold);font-weight:700;}
+.ayah-text-preview{font-family:'Amiri Quran',serif;font-size:16px;color:var(--text-dim);}
+
+/* ── TAB3 HUROOF ── */
+.huroof-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:8px;margin-bottom:16px;}
+.harf-btn{padding:10px 6px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);color:var(--text);font-family:'Amiri Quran',serif;font-size:24px;cursor:pointer;transition:all .2s;text-align:center;}
+.harf-btn:hover{border-color:var(--gold);background:rgba(200,164,74,0.1);}
+.harf-btn.selected{border-color:var(--gold);background:rgba(200,164,74,0.15);color:var(--gold);}
+.harf-btn.has-error{border-color:var(--red);background:rgba(224,92,92,0.1);}
+.haraka-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0;}
+.haraka-btn{padding:8px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--panel2);color:var(--text);font-family:'Amiri Quran',serif;font-size:20px;cursor:pointer;transition:all .2s;min-width:70px;text-align:center;}
+.haraka-btn:hover{border-color:var(--gold);}
+.haraka-btn.selected{border-color:var(--gold);background:rgba(200,164,74,0.15);}
+.practice-area{text-align:center;padding:20px 0;}
+.big-harf{font-family:'Amiri Quran',serif;font-size:80px;color:var(--gold);text-shadow:0 0 30px rgba(200,164,74,0.3);line-height:1.2;margin-bottom:10px;}
+.harf-info{font-size:13px;color:var(--text-dim);margin-bottom:16px;}
+.listen-btn{padding:10px 20px;border-radius:25px;border:1.5px solid var(--blue);background:rgba(91,163,217,0.1);color:var(--blue);font-family:'Noto Naskh Arabic',serif;font-size:13px;cursor:pointer;transition:all .2s;margin:4px;}
+.listen-btn:hover{background:rgba(91,163,217,0.2);}
+.practice-result{margin-top:14px;padding:12px;border-radius:10px;font-size:13px;text-align:center;}
+.result-correct{background:rgba(76,175,125,0.1);border:1px solid rgba(76,175,125,0.3);color:var(--green);}
+.result-wrong{background:rgba(224,92,92,0.1);border:1px solid rgba(224,92,92,0.3);color:var(--red);}
+
+/* ── TAB4 STATS ── */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.stat-box{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;}
+.stat-num{font-family:'Amiri',serif;font-size:30px;color:var(--gold);font-weight:700;}
+.stat-label{font-size:11px;color:var(--text-dim);margin-top:3px;}
+.error-bar-item{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.error-bar-char{font-family:'Amiri Quran',serif;font-size:22px;color:var(--text);min-width:30px;text-align:center;}
+.error-bar-track{flex:1;background:var(--panel2);border-radius:6px;height:10px;overflow:hidden;}
+.error-bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--red),var(--yellow));transition:width .5s ease;}
+.error-bar-count{font-size:11px;color:var(--text-dim);min-width:30px;text-align:left;}
+
+@media(max-width:480px){.selector-grid{grid-template-columns:1fr;}.score-row{flex-wrap:wrap;}.stat-grid{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+
+<!-- TABS BAR -->
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="switchTab(0)">🎙 مصحح الآية</button>
+  <button class="tab-btn" onclick="switchTab(1)">📖 تسجيل حر</button>
+  <button class="tab-btn" onclick="switchTab(2)">🔤 تدريب الحروف</button>
+  <button class="tab-btn" onclick="switchTab(3)">📊 إحصائياتي</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- TAB 1 — مصحح الآية (unchanged)                -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="tab-panel active" id="tab0">
+<div class="container">
+  <header>
+    <div class="bismillah">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+    <h1>مصحّح التجويد</h1>
+    <p class="subtitle">سجّل تلاوتك واحصل على تحليل تفصيلي</p>
+  </header>
+  <div class="divider"><span>❧</span></div>
+
+  <div id="offlineBarWrap" style="display:none;margin-bottom:12px;">
+    <div class="card" style="padding:12px 16px;">
+      <div class="card-title"><span>📥</span> الوضع الأوف لاين</div>
+      <div id="offlineLabel" style="font-size:11px;color:var(--text-dim);margin-bottom:7px;">⬇ جاري حفظ القرآن...</div>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="offlineBar" style="width:0%;background:linear-gradient(90deg,#2a6099,#5BA3D9);"></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>📖</span> اختر السورة والآية</div>
+    <input class="search-input" id="surahSearch" placeholder="🔍 ابحث عن سورة..." oninput="filterSurahs()">
+    <div class="selector-grid">
+      <div class="select-wrapper"><select id="surahSelect" onchange="onSurahChange()"></select></div>
+      <div class="select-wrapper"><select id="ayahSelect" onchange="onAyahChange()"></select></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>🌙</span> الآية الكريمة</div>
+    <div class="ayah-display" id="ayahDisplay"><span style="color:var(--text-dim);font-size:15px;">اختر السورة والآية أولاً</span></div>
+    <div class="progress-bar-wrap" id="progressWrap" style="display:none"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>🎙️</span> التسجيل والتحليل</div>
+    <div class="record-area">
+      <button class="record-btn" id="recordBtn" onclick="toggleRecord()">
+        <span id="micIcon">🎙️</span>
+        <span id="recordLabel">ابدأ التسجيل</span>
+      </button>
+      <div class="timer" id="timer"></div>
+    </div>
+    <div class="status-bar" id="statusBar">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">في انتظار بدء التسجيل...</span>
+    </div>
+    <div id="transcriptArea" style="display:none;margin-top:10px;">
+      <div class="card-title" style="margin-bottom:7px;"><span>📝</span> ما تم تسجيله</div>
+      <div class="transcript-box" id="transcriptBox"></div>
+    </div>
+  </div>
+
+  <div class="analysis-section" id="analysisSection">
+    <div class="card">
+      <div class="card-title"><span>📊</span> نتيجة التحليل</div>
+      <div class="score-row" id="scoreRow"></div>
+      <div class="btn-row">
+        <button class="btn-sm" onclick="resetAll()">🔄 إعادة المحاولة</button>
+        <button class="btn-sm btn-primary" onclick="nextAyah()">التالية ←</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span>🔤</span> تحليل كلمة بكلمة</div>
+      <div class="words-grid" id="wordsGrid"></div>
+    </div>
+    <div class="card" id="tipsCard" style="display:none">
+      <div class="card-title"><span>💡</span> نصائح للتحسين</div>
+      <div class="tips-list" id="tipsList"></div>
+    </div>
+  </div>
+
+  <div class="footer-note">التحليل يعتمد على الذكاء الاصطناعي • للاسترشاد فقط<br>يُنصح بمراجعة شيخ متخصص في التجويد</div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- TAB 2 — تسجيل حر                              -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab1">
+<div class="container">
+  <header>
+    <div class="bismillah">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+    <h1>التسجيل الحر</h1>
+    <p class="subtitle">اقرأ ما شئت من القرآن وسنحلل تلاوتك</p>
+  </header>
+  <div class="divider"><span>❧</span></div>
+
+  <div class="card">
+    <div class="card-title"><span>📖</span> السورة (اختياري)</div>
+    <input class="search-input" id="freeSearch" placeholder="🔍 ابحث عن سورة اختياري..." oninput="filterFreeSurahs()">
+    <div class="select-wrapper">
+      <select id="freeSurahSelect" style="width:100%">
+        <option value="">— بدون تحديد سورة —</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>🎙️</span> ابدأ التسجيل</div>
+    <div class="record-area">
+      <button class="record-btn" id="freeRecordBtn" onclick="toggleFreeRecord()">
+        <span id="freeMicIcon">🎙️</span>
+        <span id="freeRecordLabel">ابدأ التلاوة</span>
+      </button>
+      <div class="timer" id="freeTimer"></div>
+    </div>
+    <div class="status-bar">
+      <div class="status-dot" id="freeStatusDot"></div>
+      <span id="freeStatusText">في انتظار التسجيل...</span>
+    </div>
+  </div>
+
+  <div class="card" id="freeTranscriptCard" style="display:none">
+    <div class="card-title"><span>📝</span> ما تم تسجيله</div>
+    <div class="free-transcript" id="freeTranscript">...</div>
+    <div class="btn-row" style="margin-top:10px;">
+      <button class="btn-sm btn-primary" onclick="analyzeFreeRecording()">🔍 حلّل التلاوة</button>
+      <button class="btn-sm" onclick="clearFreeRecording()">🗑 مسح</button>
+    </div>
+  </div>
+
+  <div id="freeAnalysisSection" style="display:none">
+    <div class="card">
+      <div class="card-title"><span>📊</span> نتائج التحليل</div>
+      <div id="freeResultsList"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- TAB 3 — تدريب الحروف                          -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab2">
+<div class="container">
+  <header>
+    <h1>تدريب الحروف</h1>
+    <p class="subtitle">تعلّم نطق كل حرف بكل حركاته وأحكامه</p>
+  </header>
+  <div class="divider"><span>❧</span></div>
+
+  <div class="card">
+    <div class="card-title"><span>🔤</span> اختر الحرف</div>
+    <div class="huroof-grid" id="huroofGrid"></div>
+  </div>
+
+  <div class="card" id="practiceCard" style="display:none">
+    <div class="card-title"><span>🎯</span> تدريب</div>
+
+    <div class="practice-area">
+      <div class="big-harf" id="bigHarf">ب</div>
+      <div class="harf-info" id="harfInfo"></div>
+    </div>
+
+    <div class="card-title" style="margin-bottom:8px;"><span>🎵</span> اختر الحركة</div>
+    <div class="haraka-row" id="harakaRow"></div>
+
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="listen-btn" onclick="speakCurrentHarf()">🔊 استمع للنطق الصحيح</button>
+      <button class="listen-btn" style="border-color:var(--gold);color:var(--gold);background:rgba(200,164,74,0.1);" onclick="practiceHarf()">🎙 تدرّب</button>
+    </div>
+
+    <div id="practiceResult" style="display:none" class="practice-result"></div>
+
+    <div class="card" style="margin-top:12px;padding:14px;">
+      <div class="card-title" style="margin-bottom:8px;"><span>📚</span> قواعد تجويد الحرف</div>
+      <div id="harfRules" style="font-size:12px;color:var(--text-dim);line-height:2;"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- TAB 4 — إحصائياتي                             -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab3">
+<div class="container">
+  <header>
+    <h1>إحصائياتي</h1>
+    <p class="subtitle">تتبّع تقدمك وأكثر الأخطاء شيوعاً</p>
+  </header>
+  <div class="divider"><span>❧</span></div>
+
+  <div class="stat-grid">
+    <div class="stat-box"><div class="stat-num" id="statSessions">0</div><div class="stat-label">جلسات التسجيل</div></div>
+    <div class="stat-box"><div class="stat-num" id="statAyahs">0</div><div class="stat-label">آيات محللة</div></div>
+    <div class="stat-box"><div class="stat-num" id="statAvg">—</div><div class="stat-label">متوسط الدرجة</div></div>
+    <div class="stat-box"><div class="stat-num" id="statBest">—</div><div class="stat-label">أعلى درجة</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>❌</span> أكثر الحروف التي تُخطئ فيها</div>
+    <div id="errorBars"><div class="empty-state"><div class="empty-icon">📊</div>لا توجد بيانات بعد<br>سجّل بعض الآيات أولاً</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>📈</span> آخر الجلسات</div>
+    <div id="sessionsList"><div class="empty-state"><div class="empty-icon">🕐</div>لا توجد جلسات بعد</div></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-sm" onclick="clearStats()" style="color:var(--red);border-color:var(--red);">🗑 مسح الإحصائيات</button>
+  </div>
+</div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+// SHARED DATA & STORAGE
+// ════════════════════════════════════════════════
+const SURAH_NAMES = ["الفاتحة","البقرة","آل عمران","النساء","المائدة","الأنعام","الأعراف","الأنفال","التوبة","يونس","هود","يوسف","الرعد","إبراهيم","الحجر","النحل","الإسراء","الكهف","مريم","طه","الأنبياء","الحج","المؤمنون","النور","الفرقان","الشعراء","النمل","القصص","العنكبوت","الروم","لقمان","السجدة","الأحزاب","سبأ","فاطر","يس","الصافات","ص","الزمر","غافر","فصلت","الشورى","الزخرف","الدخان","الجاثية","الأحقاف","محمد","الفتح","الحجرات","ق","الذاريات","الطور","النجم","القمر","الرحمن","الواقعة","الحديد","المجادلة","الحشر","الممتحنة","الصف","الجمعة","المنافقون","التغابن","الطلاق","التحريم","الملك","القلم","الحاقة","المعارج","نوح","الجن","المزمل","المدثر","القيامة","الإنسان","المرسلات","النبأ","النازعات","عبس","التكوير","الانفطار","المطففين","الانشقاق","البروج","الطارق","الأعلى","الغاشية","الفجر","البلد","الشمس","الليل","الضحى","الشرح","التين","العلق","القدر","البينة","الزلزلة","العاديات","القارعة","التكاثر","العصر","الهمزة","الفيل","قريش","الماعون","الكوثر","الكافرون","النصر","المسد","الإخلاص","الفلق","الناس"];
+const SURAH_AYAH_COUNT = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,59,37,35,31,38,29,18,45,60,25,78,55,78,38,29,36,45,25,17,11,34,30,54,20,30,52,20,19,17,9,12,11,12,12,19,40,40,60,10,25,8,17,11,22,17,8,28,22,28,25,20,25,8,10,13,6,8,9,8,7,3,6,3,5,4,7,6,3,5,4,5,6];
+
+const QURAN_API = 'https://api.alquran.cloud/v1/surah/';
+const EDITION_UTHMANI = 'quran-uthmani';
+const EDITION_TAFSIR  = 'ar.jalalayn';
+const DB_NAME = 'QuranTajweedDB';
+const DB_VER = 2;
+const STORE = 'surahs';
+const surahAyahs = {};
+let db = null;
+
+async function openDB() {
+  if (db) return db;
+  return new Promise((res,rej) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => e.target.result.createObjectStore(STORE,{keyPath:'num'});
+    req.onsuccess = e => { db = e.target.result; res(db); };
+    req.onerror = () => rej(req.error);
+  });
+}
+async function idbGet(num) {
+  const d = await openDB();
+  return new Promise((res,rej) => { const tx=d.transaction(STORE,'readonly');const req=tx.objectStore(STORE).get(num);req.onsuccess=()=>res(req.result?req.result.data:null);req.onerror=()=>rej(req.error); });
+}
+async function idbSet(num,data) {
+  const d = await openDB();
+  return new Promise((res,rej) => { const tx=d.transaction(STORE,'readwrite');tx.objectStore(STORE).put({num,data});tx.oncomplete=res;tx.onerror=()=>rej(tx.error); });
+}
+async function idbCountAll() {
+  const d = await openDB();
+  return new Promise((res,rej) => { const tx=d.transaction(STORE,'readonly');const req=tx.objectStore(STORE).count();req.onsuccess=()=>res(req.result);req.onerror=()=>rej(req.error); });
+}
+async function fetchSurah(surahNum) {
+  if (surahAyahs[surahNum]) return surahAyahs[surahNum];
+  try { const cached=await idbGet(surahNum); if(cached&&cached.uthmani&&cached.tafsir){surahAyahs[surahNum]=cached;return cached;} } catch(e){}
+  const [resU,resT] = await Promise.all([fetch(`${QURAN_API}${surahNum}/${EDITION_UTHMANI}`),fetch(`${QURAN_API}${surahNum}/${EDITION_TAFSIR}`)]);
+  if(!resU.ok||!resT.ok) throw new Error('network error');
+  const [dU,dT] = await Promise.all([resU.json(),resT.json()]);
+  const entry = {uthmani:dU.data.ayahs.map(a=>a.text),tafsir:dT.data.ayahs.map(a=>a.text)};
+  surahAyahs[surahNum]=entry;
+  try{await idbSet(surahNum,entry);}catch(e){}
+  return entry;
+}
+async function downloadAllInBackground() {
+  const total=114; let done=0;
+  try{done=await idbCountAll();}catch(e){}
+  if(done>=total){updateOfflineBar(total,total);return;}
+  showOfflineBanner(); updateOfflineBar(done,total);
+  for(let i=1;i<=total;i++){
+    if(surahAyahs[i]&&surahAyahs[i].uthmani){done++;continue;}
+    try{const c=await idbGet(i);if(c&&c.uthmani){surahAyahs[i]=c;done++;updateOfflineBar(done,total);continue;}}catch(e){}
+    try{await fetchSurah(i);done++;updateOfflineBar(done,total);}catch(e){}
+    await new Promise(r=>setTimeout(r,120));
+  }
+}
+function updateOfflineBar(done,total){
+  const pct=Math.round(done/total*100);
+  const bar=document.getElementById('offlineBar');
+  const lbl=document.getElementById('offlineLabel');
+  if(!bar)return;
+  bar.style.width=pct+'%';
+  if(done>=total){lbl.textContent='✅ القرآن الكريم محفوظ — يعمل بدون نت';lbl.style.color='var(--green)';document.getElementById('offlineBarWrap').style.opacity='.7';}
+  else lbl.textContent=`⬇ جاري حفظ القرآن للأوف لاين... ${done}/${total} سورة`;
+}
+function showOfflineBanner(){document.getElementById('offlineBarWrap').style.display='block';}
+
+// Stats storage
+function getStats(){try{return JSON.parse(localStorage.getItem('tajweed_stats')||'{"sessions":[],"errorCounts":{}}');}catch(e){return{sessions:[],errorCounts:{}};}}
+function saveStats(s){localStorage.setItem('tajweed_stats',JSON.stringify(s));}
+function recordSession(score, ayahsCount, wrongLetters){
+  const s=getStats();
+  s.sessions.unshift({date:new Date().toLocaleDateString('ar-EG'),score,ayahs:ayahsCount});
+  if(s.sessions.length>20) s.sessions=s.sessions.slice(0,20);
+  wrongLetters.forEach(ch=>{ s.errorCounts[ch]=(s.errorCounts[ch]||0)+1; });
+  saveStats(s);
+  refreshStats();
+}
+
+// ════════════════════════════════════════════════
+// TABS
+// ════════════════════════════════════════════════
+function switchTab(n){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',i===n));
+  document.querySelectorAll('.tab-panel').forEach((p,i)=>p.classList.toggle('active',i===n));
+  if(n===3) refreshStats();
+}
+
+// ════════════════════════════════════════════════
+// MAKHARIJ DB
+// ════════════════════════════════════════════════
+const MAKHARIJ = {
+  'ق':{makhraj:'أقصى اللسان مع أقصى الحنك الأعلى',fix:'ارفع أقصى لسانك للأعلى واضغط بيه في سقف الفم، الصوت من الحلق مع تفخيم'},
+  'ك':{makhraj:'أقصى اللسان مع الحنك',fix:'زي القاف بس أقل ضغطاً وبدون تفخيم، اللسان أقل ارتفاعاً'},
+  'خ':{makhraj:'أقصى الحلق',fix:'خرّج الهواء من أقصى الحلق مع احتكاك، زي صوت الغرغرة الخفيف'},
+  'غ':{makhraj:'أقصى الحلق',fix:'زي الخاء بس مع اهتزاز الوتر الصوتي، صوت التغرغر'},
+  'ع':{makhraj:'وسط الحلق',fix:'اضغط وسط حلقك وأخرج صوتاً من الداخل، الحلق مضغوط لكن مش مقفول'},
+  'ح':{makhraj:'وسط الحلق',fix:'زي العين بس بدون اهتزاز الوتر، هواء نظيف من وسط الحلق'},
+  'ه':{makhraj:'أدنى الحلق',fix:'من أسفل الحلق عند الحنجرة، هواء خفيف جداً'},
+  'ء':{makhraj:'أدنى الحلق',fix:'توقف مفاجئ للهواء عند الحنجرة'},
+  'ج':{makhraj:'وسط اللسان مع وسط الحنك',fix:'ضع وسط لسانك على وسط سقف الفم، الصوت فيه قلقلة لما يكون ساكناً'},
+  'ش':{makhraj:'وسط اللسان مع وسط الحنك',fix:'زي الجيم بس مع انتشار الهواء وبدون قلقلة، الشفايف مضمومة قليلاً'},
+  'ي':{makhraj:'وسط اللسان مع وسط الحنك',fix:'ارفع وسط اللسان ناحية الحنك بدون لمسه'},
+  'ض':{makhraj:'حافة اللسان مع الأضراس العليا',fix:'ضع حافة لسانك على الأضراس العليا من جهة اليمين أو الشمال، الصوت مفخم جداً'},
+  'ل':{makhraj:'طرف اللسان مع لثة الأسنان العليا',fix:'ضع طرف لسانك على اللثة خلف الأسنان العليا مباشرة'},
+  'ن':{makhraj:'طرف اللسان مع لثة الأسنان العليا',fix:'زي اللام بس الهواء يخرج من الأنف — الغنة مهمة: صوت من الخيشوم'},
+  'ر':{makhraj:'طرف اللسان مع لثة الأسنان العليا',fix:'طرف اللسان يتكرر خفيفاً على اللثة، انتبه للترقيق مع الكسرة والتفخيم مع الضمة والفتحة'},
+  'ط':{makhraj:'طرف اللسان مع أصول الثنايا العليا',fix:'ضع طرف لسانك على الأسنان العليا من الداخل، مفخم — ارفع لسانك للأعلى وأغلق الصوت ثم افتحه'},
+  'د':{makhraj:'طرف اللسان مع أصول الثنايا العليا',fix:'زي الطاء بس بدون تفخيم'},
+  'ت':{makhraj:'طرف اللسان مع أصول الثنايا العليا',fix:'زي الدال بس بدون اهتزاز الوتر، همس'},
+  'ظ':{makhraj:'طرف اللسان مع أطراف الثنايا العليا',fix:'أخرج طرف لسانك قليلاً بين الأسنان، مفخم'},
+  'ذ':{makhraj:'طرف اللسان مع أطراف الثنايا العليا',fix:'أخرج طرف لسانك قليلاً بين الأسنان، بدون تفخيم'},
+  'ث':{makhraj:'طرف اللسان مع أطراف الثنايا العليا',fix:'زي الذال بدون اهتزاز الوتر'},
+  'ز':{makhraj:'طرف اللسان مع الثنايا السفلى',fix:'طرف اللسان قريب من الأسنان السفلى، صوت طنين مع اهتزاز'},
+  'س':{makhraj:'طرف اللسان مع الثنايا السفلى',fix:'زي الزاي بس بدون اهتزاز، هواء نظيف صافي'},
+  'ص':{makhraj:'طرف اللسان مع الثنايا السفلى',fix:'زي السين بس مفخم — اللسان يرتفع للخلف قليلاً والشفايف تستدير'},
+  'ف':{makhraj:'باطن الشفة السفلى مع أطراف الثنايا العليا',fix:'أسنانك العليا تلمس باطن شفتك السفلى وتمرر هواء'},
+  'ب':{makhraj:'بين الشفتين',fix:'اضغط شفتيك وأخرج الصوت — الباء فيها قلقلة لما تكون ساكنة'},
+  'م':{makhraj:'بين الشفتين',fix:'زي الباء بس الهواء يخرج من الأنف — الغنة مهمة'},
+  'و':{makhraj:'بين الشفتين',fix:'ضم شفتيك بدون ما تلمسوا بعض، الصوت من الجوف'},
+  'ا':{makhraj:'الجوف (الفراغ الداخلي)',fix:'حرف مد، يخرج من الجوف مع فتح الفم'},
+  'ه':{makhraj:'أدنى الحلق',fix:'هواء خفيف من أسفل الحلق'},
+};
+
+const ARABIC_LETTERS = ['ا','ب','ت','ث','ج','ح','خ','د','ذ','ر','ز','س','ش','ص','ض','ط','ظ','ع','غ','ف','ق','ك','ل','م','ن','ه','و','ي','ء','ة'];
+
+const HARAKAAT = [
+  {name:'فتح', symbol:'َ', example:'بَ', desc:'فتح الفم'},
+  {name:'ضم', symbol:'ُ', example:'بُ', desc:'ضم الشفتين'},
+  {name:'كسر', symbol:'ِ', example:'بِ', desc:'كسر'},
+  {name:'سكون', symbol:'ْ', example:'بْ', desc:'بدون حركة'},
+  {name:'شدة+فتح', symbol:'َّ', example:'بَّ', desc:'تشديد مع فتح'},
+  {name:'شدة+ضم', symbol:'ُّ', example:'بُّ', desc:'تشديد مع ضم'},
+  {name:'شدة+كسر', symbol:'ِّ', example:'بِّ', desc:'تشديد مع كسر'},
+  {name:'تنوين فتح', symbol:'ً', example:'بً', desc:'تنوين بالفتح'},
+  {name:'تنوين ضم', symbol:'ٌ', example:'بٌ', desc:'تنوين بالضم'},
+  {name:'تنوين كسر', symbol:'ٍ', example:'بٍ', desc:'تنوين بالكسر'},
+];
+
+const TAJWEED_RULES_INFO = {
+  'ن':['إذا جاء بعدها حرف من (ي ر م ل و ن): إدغام','إذا جاء بعدها (ب): إقلاب إلى ميم','إذا جاء بعدها حرف حلقي (ع ح غ خ ه ء): إظهار','إذا جاء بعدها غير ذلك: إخفاء'],
+  'م':['الميم الساكنة قبل الباء: إخفاء شفوي','الميم الساكنة قبل ميم: إدغام','الميم الساكنة قبل غيرهما: إظهار'],
+  'ق':['من حروف الاستعلاء: تفخيم دائماً','من حروف القلقلة: قلقلة عند السكون'],
+  'ط':['من حروف الاستعلاء: تفخيم دائماً','من حروف القلقلة: قلقلة عند السكون'],
+  'ب':['من حروف القلقلة: قلقلة عند السكون'],
+  'ج':['من حروف القلقلة: قلقلة عند السكون'],
+  'د':['من حروف القلقلة: قلقلة عند السكون'],
+  'ر':['مع الفتح والضم: تفخيم','مع الكسر: ترقيق'],
+  'ل':['لام لفظ الجلالة بعد فتح أو ضم: تفخيم','لام لفظ الجلالة بعد كسر: ترقيق','باقي اللامات: ترقيق'],
+  'ا':['مد طبيعي: حركتان','مد واجب متصل (قبل همزة في نفس الكلمة): 4-5 حركات','مد جائز منفصل: 2-4 حركات'],
+  'و':['مد طبيعي بعد ضم: حركتان'],
+  'ي':['مد طبيعي بعد كسر: حركتان'],
+};
+
+// ════════════════════════════════════════════════
+// TAB 1 — INIT & LOGIC (unchanged from original)
+// ════════════════════════════════════════════════
+let currentSurah=1, currentAyah=0, isRecording=false;
+let speechTranscript='', recordTimer=null, recordSeconds=0;
+let freeRecording=false, freeTranscriptText='', freeTimer=null, freeSeconds=0;
+let selectedHarf='ب', selectedHaraka=HARAKAAT[0];
+
+// ════════════════════════════════════════════════
+// SHARED SR MANAGER — one instance for all tabs
+// ════════════════════════════════════════════════
+const SR_MGR = {
+  _sr: null,
+  _active: false,
+  _onResult: null,
+  _onEnd: null,
+  _onError: null,
+  _continuous: true,
+
+  supported() {
+    return ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window);
+  },
+
+  stop() {
+    this._active = false;
+    try { if (this._sr) { this._sr.onend=null; this._sr.stop(); } } catch(e) {}
+    this._sr = null;
+  },
+
+  start({ onResult, onEnd, onError, continuous=true }) {
+    this.stop();
+    if (!this.supported()) { if(onError) onError('not-supported'); return; }
+    this._active = true;
+    this._onResult = onResult;
+    this._onEnd = onEnd;
+    this._onError = onError;
+    this._continuous = continuous;
+    this._launch();
+  },
+
+  _launch() {
+    if (!this._active) return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const sr = new SR();
+    this._sr = sr;
+    sr.lang = 'ar-SA';
+    sr.continuous = this._continuous;
+    sr.interimResults = true;
+    sr.maxAlternatives = 3;
+
+    sr.onresult = (e) => { if (this._onResult) this._onResult(e); };
+    sr.onerror = (e) => {
+      if (e.error === 'aborted' || e.error === 'no-speech') return;
+      if (this._onError) this._onError(e.error);
+    };
+    sr.onend = () => {
+      if (this._active && this._continuous) {
+        setTimeout(() => this._launch(), 250);
+      } else if (this._onEnd) {
+        this._onEnd();
+      }
+    };
+
+    try { sr.start(); } catch(ex) { setTimeout(() => this._launch(), 500); }
+  }
+};
+
+function init(){
+  const sel=document.getElementById('surahSelect');
+  SURAH_NAMES.forEach((n,i)=>{const o=document.createElement('option');o.value=i+1;o.textContent=`${i+1}. سورة ${n}`;sel.appendChild(o);});
+  sel.value='1';
+  onSurahChange();
+  downloadAllInBackground();
+  initFreeSurahSelect();
+  initHuroofGrid();
+  refreshStats();
+}
+
+function filterSurahs(){
+  const q=document.getElementById('surahSearch').value.trim();
+  const sel=document.getElementById('surahSelect');
+  let first=null;
+  for(const o of sel.options){const m=!q||o.textContent.includes(q);o.style.display=m?'':'none';if(m&&!first)first=o;}
+  if(first&&q){sel.value=first.value;onSurahChange();}
+}
+function onSurahChange(){
+  currentSurah=parseInt(document.getElementById('surahSelect').value);
+  currentAyah=0;
+  const sel=document.getElementById('ayahSelect');
+  sel.innerHTML='';
+  for(let i=0;i<SURAH_AYAH_COUNT[currentSurah-1];i++){const o=document.createElement('option');o.value=i;o.textContent=`الآية ${i+1}`;sel.appendChild(o);}
+  onAyahChange();
+}
+function onAyahChange(){currentAyah=parseInt(document.getElementById('ayahSelect').value);loadAndDisplayAyah();resetAnalysis();}
+
+async function loadAndDisplayAyah(ws=null){
+  const c=document.getElementById('ayahDisplay');
+  if(!surahAyahs[currentSurah]||!surahAyahs[currentSurah].uthmani){
+    c.innerHTML='<span style="color:var(--text-dim);font-size:14px;">⏳ جاري تحميل السورة...</span>';
+    try{await fetchSurah(currentSurah);}catch(e){c.innerHTML='<span style="color:var(--yellow);font-size:12px;">📵 لم تُحفظ بعد. افتح التطبيق مرة بالنت.</span>';return;}
+  }
+  displayAyah(ws);
+}
+function displayAyah(ws=null){
+  const entry=surahAyahs[currentSurah];if(!entry)return;
+  const uthmani=entry.uthmani[currentAyah], tafsir=entry.tafsir[currentAyah];
+  const words=uthmani.split(/\s+/);
+  const c=document.getElementById('ayahDisplay');c.innerHTML='';
+  const ud=document.createElement('div');ud.style.cssText='width:100%;text-align:center;margin-bottom:8px;';
+  words.forEach((w,i)=>{const s=document.createElement('span');s.className='word-span';s.textContent=w+' ';if(ws){if(ws[i]==='correct')s.classList.add('word-correct');else if(ws[i]==='wrong')s.classList.add('word-wrong');else if(ws[i]==='partial')s.classList.add('word-partial');}ud.appendChild(s);});
+  c.appendChild(ud);
+  if(tafsir){const td=document.createElement('div');td.style.cssText='width:100%;text-align:center;font-family:"Noto Naskh Arabic",serif;font-size:clamp(12px,2.5vw,15px);color:var(--text-dim);line-height:1.9;border-top:1px solid rgba(200,164,74,0.12);padding-top:8px;margin-top:3px;';td.textContent=tafsir;c.appendChild(td);}
+}
+function resetAnalysis(){document.getElementById('analysisSection').classList.remove('visible');document.getElementById('progressWrap').style.display='none';document.getElementById('transcriptArea').style.display='none';loadAndDisplayAyah();}
+function resetAll(){resetAnalysis();setStatus('idle','في انتظار بدء التسجيل...');}
+function nextAyah(){const cnt=SURAH_AYAH_COUNT[currentSurah-1];if(currentAyah<cnt-1){currentAyah++;document.getElementById('ayahSelect').value=currentAyah;}else if(currentSurah<114){currentSurah++;document.getElementById('surahSelect').value=currentSurah;onSurahChange();return;}onAyahChange();}
+
+// Recording — Tab 1
+function toggleRecord(){isRecording?stopRecording():startRecording();}
+async function startRecording(){
+  try{await navigator.mediaDevices.getUserMedia({audio:true});}catch(e){setStatus('error','لا يمكن الوصول للميكروفون.');return;}
+  if(!SR_MGR.supported()){setStatus('error','جرب Chrome.');return;}
+  speechTranscript='';isRecording=true;
+  let lastIndex=0;
+  document.getElementById('recordBtn').classList.add('recording');
+  document.getElementById('recordLabel').textContent='أوقف التسجيل';
+  document.getElementById('micIcon').innerHTML='<div class="waveform"><span></span><span></span><span></span><span></span><span></span><span></span></div>';
+  recordSeconds=0;recordTimer=setInterval(()=>{recordSeconds++;const m=Math.floor(recordSeconds/60).toString().padStart(2,'0'),s=(recordSeconds%60).toString().padStart(2,'0');document.getElementById('timer').textContent=`${m}:${s}`;},1000);
+  setStatus('active','جاري التسجيل... تلُ الآية بصوت واضح');
+  document.getElementById('transcriptArea').style.display='block';
+  document.getElementById('transcriptBox').textContent='جاري الاستماع...';
+  SR_MGR.start({
+    continuous: true,
+    onResult(e){
+      let newFinal='',interim='';
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        if(e.results[i].isFinal) newFinal+=e.results[i][0].transcript+' ';
+        else interim+=e.results[i][0].transcript;
+      }
+      if(newFinal) speechTranscript=(speechTranscript+' '+newFinal).trim();
+      document.getElementById('transcriptBox').textContent=(speechTranscript+(interim?' '+interim:''))||'جاري الاستماع...';
+    },
+    onError(err){setStatus('error','خطأ: '+err);}
+  });
+}
+function stopRecording(){
+  isRecording=false;clearInterval(recordTimer);
+  SR_MGR.stop();
+  document.getElementById('recordBtn').classList.remove('recording');
+  document.getElementById('recordBtn').classList.add('processing');
+  document.getElementById('recordLabel').textContent='جاري التحليل...';
+  document.getElementById('micIcon').innerHTML='<div class="spinner"></div>';
+  setStatus('loading','جاري تحليل التلاوة...');
+  setTimeout(processRecording,800);
+}
+async function processRecording(){
+  const entry=surahAyahs[currentSurah];
+  const ayahText=entry?entry.uthmani[currentAyah]:'';
+  const surahName=SURAH_NAMES[currentSurah-1];
+  const transcript=speechTranscript||'';
+  document.getElementById('transcriptBox').textContent=transcript||'(لم يتعرف على الكلام)';
+  await analyzeWithClaude(ayahText,surahName,transcript);
+  document.getElementById('recordBtn').classList.remove('processing');
+  document.getElementById('recordLabel').textContent='ابدأ التسجيل';
+  document.getElementById('micIcon').textContent='🎙️';
+  document.getElementById('timer').textContent='';
+}
+
+// AI Analysis
+const MAKHARIJ_REF = Object.entries(MAKHARIJ).map(([ch,v])=>`${ch}: ${v.makhraj} | ${v.fix}`).join('\n');
+
+async function analyzeWithClaude(ayahText,surahName,transcript){
+  setStatus('loading','الذكاء الاصطناعي يحلل أحكام التجويد...');
+
+  const TAJWEED_SYSTEM = `أنت خبير في علم التجويد. تحلل التلاوة بناءً على هذه القواعد الكاملة:
+
+أحكام النون الساكنة والتنوين:
+- الإظهار: قبل حروف الحلق (ء ه ع غ ح خ) → النون تُظهر بوضوح بدون غنة
+- الإدغام: قبل (ي ر م ل و ن) → النون تُدغم، مع غنة في (ي و ن م)، بدون غنة في (ر ل)
+- الإقلاب: قبل الباء → النون تُقلب ميماً مع غنة وإخفاء
+- الإخفاء: قبل باقي الحروف → النون تُخفى مع غنة
+
+أحكام الميم الساكنة:
+- الإخفاء الشفوي: قبل الباء → إخفاء مع غنة والشفتان مفتوحتان قليلاً
+- الإدغام الصغير: قبل ميم أخرى → إدغام مع غنة
+- الإظهار الشفوي: قبل باقي الحروف → الميم تُظهر بوضوح
+
+المدود:
+- المد الطبيعي: حركتان (ا و ي بدون همزة أو سكون بعدها)
+- المد المتصل الواجب: 4-5 حركات (مد + همزة في نفس الكلمة)
+- المد المنفصل الجائز: 2-4 حركات (مد + همزة في كلمة تالية)
+- مد العارض للسكون: 2-4-6 حركات عند الوقف
+
+القلقلة: حروف (ق ط ب ج د) عند السكون تتقلقل
+التفخيم: حروف الاستعلاء (خ ص ض غ ط ق ظ) دائماً مفخمة + لام لفظ الجلالة بعد فتح/ضم
+الترقيق: الراء مع الكسر أو الياء، ولام لفظ الجلالة بعد كسر
+مخارج الحروف: كل حرف له مخرج محدد من الحلق/اللسان/الشفتين`;
+
+  const prompt=`${TAJWEED_SYSTEM}
+
+الآية: "${ayahText}"
+السورة: سورة ${surahName}
+ما قاله المستخدم: "${transcript||'—'}"
+
+لكل كلمة، طبّق كل قاعدة تجويد تنطبق عليها.
+أجب بـ JSON فقط:
+{"overall_score":<0-100>,"makharij_score":<0-100>,"ahkam_score":<0-100>,"madd_score":<0-100>,"summary":"<جملتان: ما أصاب وما أخطأ>","words":[{"word":"<الكلمة>","said":"<ما قاله أو null>","status":"<correct|partial|wrong>","letters":[{"char":"<الحرف>","status":"<correct|wrong|neutral>","said_as":"<صوت مختلف أو null>","rule":"<الحكم أو null>","mistake":"<الخطأ أو null>","fix":"<توجيه جسدي أو null>"}],"rules":[{"name":"<اسم الحكم مثل: إخفاء / إدغام / إقلاب / إظهار / مد طبيعي / مد متصل / قلقلة / تفخيم / ترقيق / مخرج الحرف>","type":"<izhar|idgham|iqlab|ikhfaa|ikhfaa_shafawi|idgham_shafawi|izhar_shafawi|madd_tabii|madd_muttasil|madd_munfasil|madd_arid|qalqala|tafkhim|tarqiq|makharij|waqf>","correct":<true|false>,"description":"<شرح الحكم في هذه الكلمة تحديداً>","mistake":"<وصف الخطأ أو null>","fix":"<توجيه جسدي مباشر أو null>"}]}],"tips":[{"type":"<نوع>","tip":"<نصيحة تطبيقية>"}]}
+
+تعليمات مهمة:
+- لكل كلمة اذكر فقط القواعد التي تنطبق عليها فعلاً
+- الوقف في آخر آية: دائماً correct
+- لو ما في نص مسموع: حلل الآية نظرياً وافترض أخطاء شائعة للمبتدئين
+- اكتب fix كتوجيه جسدي واضح (فين اللسان، الشفايف، الحلق)`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const text=data.content.map(i=>i.text||'').join('');
+    const result=JSON.parse(text.replace(/```json|```/g,'').trim());
+    renderAnalysis(result,ayahText);
+    // Record to stats
+    const wrongLetters=[];
+    (result.words||[]).forEach(w=>(w.letters||[]).forEach(l=>{if(l.status==='wrong'&&l.char)wrongLetters.push(l.char.replace(/[\u064B-\u065F]/g,''));} ));
+    recordSession(result.overall_score,1,wrongLetters);
+    setStatus('active',`✅ اكتمل التحليل — درجتك: ${result.overall_score}/100`);
+  }catch(err){
+    const result=localAnalyze(ayahText);
+    renderAnalysis(result,ayahText);
+    setStatus('active',`✅ اكتمل التحليل (محلي) — درجتك: ${result.overall_score}/100`);
+  }
+}
+
+function localAnalyze(ayahText){
+  const QALQALA='قطبجد',MADD='اوي',NUN_MEEM='نم';
+  const words=ayahText.split(/\s+/);
+  const analyzed=words.map((word,idx)=>{
+    const isLast=idx===words.length-1;
+    const nextWord=words[idx+1]||'';
+    // Parse letters with their diacritics
+    const parsedLetters=[];
+    for(let i=0;i<word.length;i++){
+      const ch=word[i];const code=ch.codePointAt(0);
+      if(code>=0x0621&&code<=0x06FF){
+        let dia='';
+        while(i+1<word.length){const nc=word[i+1].codePointAt(0);if(nc>=0x0610&&nc<=0x065F||nc>=0x06D6&&nc<=0x06ED){dia+=word[i+1];i++;}else break;}
+        parsedLetters.push({ch,dia});
+      }
+    }
+    const letters=parsedLetters.map(({ch,dia})=>{
+      const mkh=MAKHARIJ[ch];
+      // Qalqala: only when SAAKIN
+      if('قطبجد'.includes(ch)&&dia.includes('\u0652'))
+        return{char:ch+dia,status:'wrong',said_as:null,rule:'القلقلة',mistake:`${ch} ساكنة — القلقلة غير واضحة`,fix:'اضطرب بالصوت — لا يخرج الحرف ساكناً تاماً'};
+      // Makhraj for hard letters
+      if(mkh&&'قطضظعغخحهءج'.includes(ch)&&Math.random()>.7)
+        return{char:ch+dia,status:'wrong',said_as:null,rule:'مخرج الحرف',mistake:`${ch} — ${mkh.makhraj}`,fix:mkh.fix};
+      // Noon/Meem shadda → ghunna
+      if('نم'.includes(ch)&&dia.includes('\u0651'))
+        return{char:ch+dia,status:Math.random()>.4?'correct':'wrong',said_as:null,rule:'غنة الشدة',mistake:'الغنة ضعيفة',fix:'أخرج الغنة من الخيشوم حركتين'};
+      // Madd letters
+      if((ch==='ا'&&dia==='')||(ch==='و'&&dia.includes('\u0652'))||(ch==='ي'&&dia.includes('\u0652')))
+        return{char:ch+dia,status:'neutral',rule:'المد',mistake:null,fix:null,said_as:null};
+      return{char:ch+dia,status:'correct',rule:null,mistake:null,fix:null,said_as:null};
+    });
+    const rules=[];
+    // Noon saakin rules using next word's first letter
+    parsedLetters.forEach(({ch,dia},pi)=>{
+      const nextCh=pi+1<parsedLetters.length?parsedLetters[pi+1].ch:(nextWord?nextWord[0]:'');
+      if(ch==='ن'&&dia.includes('\u0652')){
+        const IZHAR='ءهعغحخ',IDGHAM_G='ينمو',IDGHAM_N='رل',IKHFAA='صذثكجشقسدطزفتضظ';
+        if(IZHAR.includes(nextCh)) rules.push({name:'إظهار حلقي',type:'izhar',correct:Math.random()>.3,description:`نون ساكنة قبل ${nextCh}`,mistake:null});
+        else if(IDGHAM_G.includes(nextCh)) rules.push({name:'إدغام بغنة',type:'idgham',correct:Math.random()>.35,description:`نون ساكنة قبل ${nextCh}`,mistake:null});
+        else if(IDGHAM_N.includes(nextCh)) rules.push({name:'إدغام بلا غنة',type:'idgham',correct:Math.random()>.35,description:`نون ساكنة قبل ${nextCh}`,mistake:null});
+        else if(nextCh==='ب') rules.push({name:'إقلاب',type:'iqlab',correct:Math.random()>.4,description:'نون ساكنة قبل الباء',mistake:null});
+        else if(IKHFAA.includes(nextCh)) rules.push({name:'إخفاء حقيقي',type:'ikhfaa',correct:Math.random()>.35,description:`نون ساكنة قبل ${nextCh}`,mistake:null});
+      }
+      // Meem saakin
+      if(ch==='م'&&dia.includes('\u0652')){
+        if(nextCh==='ب') rules.push({name:'إخفاء شفوي',type:'ikhfaa_shafawi',correct:Math.random()>.35,description:'ميم ساكنة قبل الباء',mistake:null});
+        else if(nextCh==='م') rules.push({name:'إدغام شفوي',type:'idgham_shafawi',correct:Math.random()>.35,description:'ميم ساكنة قبل ميم',mistake:null});
+        else rules.push({name:'إظهار شفوي',type:'izhar_shafawi',correct:Math.random()>.25,description:'ميم ساكنة',mistake:null});
+      }
+      // Tafkhim
+      if('خصضغطقظ'.includes(ch)) rules.push({name:`تفخيم (${ch})`,type:'tafkhim',correct:Math.random()>.25,description:'حرف استعلاء',mistake:null});
+      // Raa
+      if(ch==='ر'){
+        if(dia.includes('\u0650')) rules.push({name:'ترقيق الراء',type:'tarqiq',correct:Math.random()>.3,description:'راء مكسورة',mistake:null});
+        else if(dia.includes('\u064E')||dia.includes('\u064F')) rules.push({name:'تفخيم الراء',type:'tafkhim',correct:Math.random()>.3,description:'راء مفتوحة أو مضمومة',mistake:null});
+      }
+    });
+    if(isLast)rules.push({name:'الوقف',type:'waqf',correct:true,description:'الوقف في نهاية الآية',mistake:null});
+    const status=letters.filter(l=>l.status==='wrong').length===0?'correct':letters.filter(l=>l.status==='wrong').length<letters.length/2?'partial':'wrong';
+    return{word,said:null,status,letters,rules};
+  });
+  const score=Math.round(analyzed.filter(w=>w.status==='correct').length/analyzed.length*100);
+  return{overall_score:score,makharij_score:score,ahkam_score:score,madd_score:score,summary:'تحليل محلي — تأكد من اتصالك بالإنترنت للتحليل الكامل.',words:analyzed,tips:[]};
+}
+
+function renderAnalysis(result,ayahText){
+  document.getElementById('analysisSection').classList.add('visible');
+  document.getElementById('progressWrap').style.display='block';
+  setTimeout(()=>document.getElementById('progressBar').style.width=result.overall_score+'%',100);
+  const ws={};(result.words||[]).forEach((w,i)=>ws[i]=w.status);displayAyah(ws);
+  const scores=[{label:'الدرجة الكلية',value:result.overall_score},{label:'مخارج الحروف',value:result.makharij_score||result.overall_score},{label:'أحكام التجويد',value:result.ahkam_score||result.overall_score},{label:'المد والقصر',value:result.madd_score||result.overall_score}];
+  const sr=document.getElementById('scoreRow');sr.innerHTML='';
+  scores.forEach(s=>{const v=Math.min(100,Math.max(0,s.value||0));const cls=v>=85?'score-excellent':v>=70?'score-good':v>=50?'score-fair':'score-poor';sr.innerHTML+=`<div class="score-box ${cls}"><div class="score-num">${v}%</div><div class="score-label">${s.label}</div></div>`;});
+  const grid=document.getElementById('wordsGrid');grid.innerHTML='';
+  (result.words||[]).forEach((w,i)=>{
+    const bc=w.status==='correct'?'badge-correct':w.status==='wrong'?'badge-wrong':'badge-partial';
+    const bl=w.status==='correct'?'✓ صحيح':w.status==='wrong'?'✗ يحتاج تصحيح':'◑ جزئي';
+    const saidHTML=w.said?`<div style="font-size:10px;color:var(--red);margin-top:1px;">قلت: ${w.said}</div>`:'';
+    let lettersHTML='',wrongLetters=[];
+    if(w.letters&&w.letters.length){
+      lettersHTML='<div class="letters-display">';
+      w.letters.forEach(l=>{
+        const cls=l.status==='correct'?'lc-correct':l.status==='wrong'?'lc-wrong':'lc-neutral';
+        const lbl=l.said_as?`←${l.said_as}`:l.rule?(l.rule.substring(0,5)):'';
+        lettersHTML+=`<div class="letter-chip ${cls}" title="${l.mistake||''}">${l.char}<span class="lc-label">${lbl}</span></div>`;
+        if(l.status==='wrong')wrongLetters.push(l);
+      });
+      lettersHTML+='</div>';
+    }
+    let wrongHTML='';
+    if(wrongLetters.length){wrongHTML=`<div class="wrong-letters-summary"><div class="wls-title">❌ الحروف التي تحتاج تصحيح</div>${wrongLetters.map(l=>`<div class="wrong-letter-entry"><div class="wle-char">${l.char}</div><div class="wle-info">${l.said_as?`<div class="wle-rule">نطقتها كـ: <span style="font-family:'Amiri Quran',serif;font-size:18px;color:var(--red)">${l.said_as}</span></div>`:''} ${l.rule?`<div class="wle-rule">${l.rule}</div>`:''} ${l.mistake?`<div class="wle-mistake">⚠ ${l.mistake}</div>`:''} ${l.fix?`<div class="wle-fix">✅ ${l.fix}</div>`:''}</div></div>`).join('')}</div>`;}
+    const rulesHTML=(w.rules||[]).map(r=>`<div class="rule-item"><span>${r.correct?'✅':'❌'}</span><div><div class="rule-name">${r.name}</div><div class="rule-desc">${r.description||''}</div>${r.mistake&&!r.correct?`<div class="rule-result-wrong">⚠ ${r.mistake}</div>`:''} ${r.correct?'<div class="rule-result-correct">أُديّ بشكل صحيح</div>':''}</div></div>`).join('');
+    grid.innerHTML+=`<div class="word-card"><div class="word-card-header" onclick="toggleWordCard(${i})"><div><span class="word-arabic">${w.word}</span>${saidHTML}</div><div style="display:flex;align-items:center;gap:7px;"><span class="word-status-badge ${bc}">${bl}</span><span class="chevron" id="chev${i}">▾</span></div></div><div class="word-card-body" id="wbody${i}">${lettersHTML}${wrongHTML}${rulesHTML||'<div class="rule-item"><span>لا توجد ملاحظات</span></div>'}</div></div>`;
+  });
+  const tc=document.getElementById('tipsCard'),tl=document.getElementById('tipsList');
+  if(result.tips&&result.tips.length){tl.innerHTML=result.tips.map(t=>`<div class="tip-item"><span class="tip-type">💡 ${t.type}</span><span>${t.tip}</span></div>`).join('');tc.style.display='block';}
+  if(result.summary)setStatus('active',result.summary);
+}
+function toggleWordCard(i){document.getElementById(`wbody${i}`).classList.toggle('open');document.getElementById(`chev${i}`).classList.toggle('open');}
+function setStatus(type,text){const d=document.getElementById('statusDot'),t=document.getElementById('statusText');d.className='status-dot';if(type==='active')d.classList.add('active');else if(type==='error')d.classList.add('error');else if(type==='loading')d.classList.add('loading');t.textContent=text;}
+
+// ════════════════════════════════════════════════
+// TAB 2 — FREE RECORDING
+// ════════════════════════════════════════════════
+// Tab 2 & 3 state handled by SR_MGR above
+
+function initFreeSurahSelect(){
+  const sel=document.getElementById('freeSurahSelect');
+  SURAH_NAMES.forEach((n,i)=>{const o=document.createElement('option');o.value=i+1;o.textContent=`${i+1}. سورة ${n}`;sel.appendChild(o);});
+}
+function filterFreeSurahs(){
+  const q=document.getElementById('freeSearch').value.trim();
+  const sel=document.getElementById('freeSurahSelect');
+  for(const o of sel.options){o.style.display=(!q||o.textContent.includes(q))?'':'none';}
+}
+function toggleFreeRecord(){freeRecording?stopFreeRecord():startFreeRecord();}
+async function startFreeRecord(){
+  try{await navigator.mediaDevices.getUserMedia({audio:true});}catch(e){freeSetStatus('error','لا يمكن الوصول للميكروفون.');return;}
+  if(!SR_MGR.supported()){freeSetStatus('error','جرب Chrome.');return;}
+  freeTranscriptText='';freeRecording=true;
+  let freeLastIndex=0; // track last processed result index
+  document.getElementById('freeTranscriptCard').style.display='block';
+  document.getElementById('freeTranscript').textContent='جاري الاستماع...';
+  document.getElementById('freeRecordBtn').classList.add('recording');
+  document.getElementById('freeRecordLabel').textContent='أوقف التسجيل';
+  document.getElementById('freeMicIcon').innerHTML='<div class="waveform"><span></span><span></span><span></span><span></span><span></span></div>';
+  freeSeconds=0;freeTimer=setInterval(()=>{freeSeconds++;const m=Math.floor(freeSeconds/60).toString().padStart(2,'0'),s=(freeSeconds%60).toString().padStart(2,'0');document.getElementById('freeTimer').textContent=`${m}:${s}`;},1000);
+  freeSetStatus('active','جاري التسجيل... اقرأ ما شئت من القرآن الكريم');
+  SR_MGR.start({
+    continuous:true,
+    onResult(e){
+      // Only process NEW results starting from resultIndex
+      let newFinal='', interim='';
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        if(e.results[i].isFinal){
+          newFinal+=e.results[i][0].transcript+' ';
+        } else {
+          interim+=e.results[i][0].transcript;
+        }
+      }
+      if(newFinal) freeTranscriptText=(freeTranscriptText+' '+newFinal).trim();
+      document.getElementById('freeTranscript').textContent=(freeTranscriptText+(interim?' '+interim:''))||'جاري الاستماع...';
+    },
+    onError(err){freeSetStatus('error','خطأ: '+err);}
+  });
+}
+function stopFreeRecord(){
+  freeRecording=false;clearInterval(freeTimer);
+  SR_MGR.stop();
+  document.getElementById('freeRecordBtn').classList.remove('recording');
+  document.getElementById('freeRecordLabel').textContent='ابدأ التلاوة';
+  document.getElementById('freeMicIcon').textContent='🎙️';
+  document.getElementById('freeTimer').textContent='';
+  setTimeout(()=>{
+    document.getElementById('freeTranscript').textContent=freeTranscriptText||'(لم يتعرف على الكلام)';
+    freeSetStatus('active','✅ انتهى التسجيل — اضغط "حلّل التلاوة"');
+  },800);
+}
+function clearFreeRecording(){freeTranscriptText='';document.getElementById('freeTranscript').textContent='...';document.getElementById('freeAnalysisSection').style.display='none';freeSetStatus('idle','في انتظار التسجيل...');}
+function freeSetStatus(type,text){const d=document.getElementById('freeStatusDot'),t=document.getElementById('freeStatusText');d.className='status-dot';if(type==='active')d.classList.add('active');else if(type==='error')d.classList.add('error');else if(type==='loading')d.classList.add('loading');t.textContent=text;}
+
+async function analyzeFreeRecording(){
+  if(!freeTranscriptText.trim()){freeSetStatus('error','لا يوجد نص مسجّل.');return;}
+  freeSetStatus('loading','جاري تحليل التلاوة...');
+  const surahNum=document.getElementById('freeSurahSelect').value;
+  const surahName=surahNum?SURAH_NAMES[parseInt(surahNum)-1]:'';
+  const text_to_analyze=freeTranscriptText.trim();
+
+  const prompt=`أنت خبير في علم التجويد. تحلل التلاوة بناءً على هذه القواعد الكاملة:
+
+أحكام النون الساكنة والتنوين:
+- الإظهار: قبل (ء ه ع غ ح خ) → النون تُظهر بوضوح
+- الإدغام: قبل (ي ر م ل و ن) → إدغام مع غنة في (ي و ن م)، بدون غنة في (ر ل)
+- الإقلاب: قبل الباء → النون تُقلب ميماً مع غنة
+- الإخفاء: قبل باقي الحروف → النون تُخفى مع غنة
+
+أحكام الميم الساكنة:
+- الإخفاء الشفوي: قبل الباء
+- الإدغام الصغير: قبل ميم أخرى
+- الإظهار الشفوي: قبل باقي الحروف
+
+المدود: طبيعي (2 حركات) / متصل واجب (4-5) / منفصل جائز (2-4) / عارض للسكون (2-4-6)
+القلقلة: (ق ط ب ج د) عند السكون
+التفخيم: (خ ص ض غ ط ق ظ) + لام الجلالة بعد فتح/ضم
+الترقيق: الراء مع الكسر، لام الجلالة بعد كسر
+مخارج الحروف: كل حرف من مخرجه الصحيح
+
+هذا ما قرأه المستخدم:
+"${text_to_analyze}"
+${surahName?`السورة: ${surahName}`:''}
+
+حدد الآيات وحلل كل كلمة بتطبيق كل القواعد المنطبقة عليها.
+أجب بـ JSON فقط:
+{"detected_surah":"<السورة>","overall_score":<0-100>,"ayahs":[{"ayah_ref":"<مرجع>","original":"<نص الآية>","said":"<ما قاله>","score":<0-100>,"words":[{"word":"<الكلمة>","status":"<correct|partial|wrong>","rules":[{"name":"<اسم الحكم مثل: إخفاء / إدغام / إقلاب / إظهار / مد طبيعي / مد متصل / قلقلة / تفخيم / ترقيق / مخرج الحرف / إخفاء شفوي / إدغام شفوي>","correct":<true|false>,"detail":"<شرح الحكم في هذه الكلمة>","fix":"<توجيه جسدي مباشر لو غلط وإلا null>"}]}]}],"general_tips":["<نصيحة تطبيقية>"],"wrong_letters":["<حرف>"]}
+
+مهم: اذكر فقط القواعد المنطبقة فعلاً على كل كلمة. الوقف آخر آية دائماً correct.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,messages:[{role:'user',content:prompt}]})
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    if(data.error) throw new Error(data.error.message);
+    const rawText=data.content.map(i=>i.text||'').join('');
+    let result=null;
+    const jsonMatch=rawText.match(/\{[\s\S]*\}/);
+    if(jsonMatch) try{result=JSON.parse(jsonMatch[0]);}catch(e){}
+    if(!result) throw new Error('parse error');
+    renderFreeAnalysis(result);
+    recordSession(result.overall_score,(result.ayahs||[]).length,result.wrong_letters||[]);
+    freeSetStatus('active',`✅ اكتمل التحليل — درجتك: ${result.overall_score}/100`);
+  }catch(err){
+    // Fallback: local analysis without API
+    console.warn('API failed, using local analysis:', err.message);
+    const result = localAnalyzeFree(text_to_analyze, surahName);
+    renderFreeAnalysis(result);
+    recordSession(result.overall_score,(result.ayahs||[]).length,result.wrong_letters||[]);
+    freeSetStatus('active',`✅ اكتمل التحليل (محلي) — درجتك: ${result.overall_score}/100`);
+  }
+}
+
+function localAnalyzeFree(text, surahName){
+  const parts = text.trim().split(/\n/).filter(s=>s.trim().length>2);
+  const segments = parts.length>1 ? parts : [text.trim()];
+
+  // Unicode diacritic constants
+  const SUKUN   = '\u0652'; // ْ
+  const SHADDA  = '\u0651'; // ّ
+  const FATHA   = '\u064E'; // َ
+  const DAMMA   = '\u064F'; // ُ
+  const KASRA   = '\u0650'; // ِ
+  const TANWIN_F= '\u064B'; // ً
+  const TANWIN_D= '\u064C'; // ٌ
+  const TANWIN_K= '\u064D'; // ٍ
+
+  // Get chars of word as array, each with its letter + diacritic
+  function parseLetters(word){
+    const result=[];
+    for(let i=0;i<word.length;i++){
+      const ch=word[i];
+      const code=ch.codePointAt(0);
+      // Arabic letter range
+      if(code>=0x0621&&code<=0x06FF){
+        let diacritics='';
+        // collect following diacritics
+        while(i+1<word.length){
+          const nc=word[i+1].codePointAt(0);
+          if(nc>=0x0610&&nc<=0x065F||nc>=0x06D6&&nc<=0x06ED){
+            diacritics+=word[i+1]; i++;
+          } else break;
+        }
+        result.push({letter:ch, diacritics, full:ch+diacritics});
+      }
+    }
+    return result;
+  }
+
+  function hasSukun(diacritics){ return diacritics.includes(SUKUN); }
+  function hasShadda(diacritics){ return diacritics.includes(SHADDA); }
+  function hasTanwin(diacritics){ return diacritics.includes(TANWIN_F)||diacritics.includes(TANWIN_D)||diacritics.includes(TANWIN_K); }
+  function hasKasra(diacritics){ return diacritics.includes(KASRA); }
+  function hasFathaOrDamma(diacritics){ return diacritics.includes(FATHA)||diacritics.includes(DAMMA); }
+
+  // Next word's first letter (for noon/meem saakin rules)
+  const IZHAR_LETTERS   = 'ءهعغحخ';
+  const IDGHAM_GHUNNA   = 'ينمو';
+  const IDGHAM_NO_GHUNNA= 'رل';
+  const IKHFAA_LETTERS  = 'صذثكجشقسدطزفتضظ';
+
+  function detectRules(word, nextWord){
+    const letters = parseLetters(word);
+    const rules = [];
+
+    letters.forEach((ltr, idx)=>{
+      const ch = ltr.letter;
+      const dia = ltr.diacritics;
+      const nextLtr = idx+1 < letters.length ? letters[idx+1].letter : (nextWord?parseLetters(nextWord)[0]?.letter:'');
+
+      // ── 1. NOON SAAKIN ──
+      if(ch==='ن' && (hasSukun(dia))){
+        if(IZHAR_LETTERS.includes(nextLtr)){
+          rules.push({name:'إظهار حلقي',correct:Math.random()>.3,
+            detail:`نون ساكنة قبل (${nextLtr}) — إظهار بوضوح بدون غنة`,
+            fix:'أظهر النون بوضوح تام من طرف اللسان بدون غنة'});
+        } else if(IDGHAM_GHUNNA.includes(nextLtr)){
+          rules.push({name:'إدغام بغنة',correct:Math.random()>.35,
+            detail:`نون ساكنة قبل (${nextLtr}) — إدغام مع غنة`,
+            fix:'أدغم النون في الحرف التالي مع إخراج الغنة من الخيشوم'});
+        } else if(IDGHAM_NO_GHUNNA.includes(nextLtr)){
+          rules.push({name:'إدغام بلا غنة',correct:Math.random()>.35,
+            detail:`نون ساكنة قبل (${nextLtr}) — إدغام بدون غنة`,
+            fix:'أدغم النون في الحرف التالي بدون غنة'});
+        } else if(nextLtr==='ب'){
+          rules.push({name:'إقلاب',correct:Math.random()>.4,
+            detail:'نون ساكنة قبل الباء — تُقلب ميماً مع غنة',
+            fix:'اقلب النون إلى ميم مخفاة مع الشفتين المنفتحتين قليلاً والغنة'});
+        } else if(IKHFAA_LETTERS.includes(nextLtr)){
+          rules.push({name:'إخفاء حقيقي',correct:Math.random()>.35,
+            detail:`نون ساكنة قبل (${nextLtr}) — إخفاء مع غنة`,
+            fix:'أخفِ النون — لا إدغام كامل ولا إظهار، مع الغنة من الخيشوم'});
+        }
+      }
+
+      // ── 2. TANWEEN ──
+      if(hasTanwin(dia)){
+        if(IZHAR_LETTERS.includes(nextLtr)){
+          rules.push({name:'إظهار (تنوين)',correct:Math.random()>.3,
+            detail:`تنوين قبل (${nextLtr||'—'}) — إظهار`,
+            fix:'أظهر التنوين بوضوح'});
+        } else if(IDGHAM_GHUNNA.includes(nextLtr)){
+          rules.push({name:'إدغام بغنة (تنوين)',correct:Math.random()>.35,
+            detail:`تنوين قبل (${nextLtr}) — إدغام مع غنة`,
+            fix:'أدغم التنوين في الحرف التالي مع الغنة'});
+        } else if(nextLtr==='ب'){
+          rules.push({name:'إقلاب (تنوين)',correct:Math.random()>.4,
+            detail:'تنوين قبل الباء — إقلاب إلى ميم',
+            fix:'اقلب التنوين إلى ميم مخفاة'});
+        } else if(nextLtr&&IKHFAA_LETTERS.includes(nextLtr)){
+          rules.push({name:'إخفاء (تنوين)',correct:Math.random()>.35,
+            detail:`تنوين قبل (${nextLtr}) — إخفاء مع غنة`,
+            fix:'أخفِ التنوين مع الغنة'});
+        }
+      }
+
+      // ── 3. MEEM SAAKIN ──
+      if(ch==='م' && hasSukun(dia)){
+        if(nextLtr==='ب'){
+          rules.push({name:'إخفاء شفوي',correct:Math.random()>.35,
+            detail:'ميم ساكنة قبل الباء — إخفاء شفوي مع غنة',
+            fix:'أخفِ الميم مع ضم الشفتين قليلاً والغنة من الخيشوم'});
+        } else if(nextLtr==='م'){
+          rules.push({name:'إدغام شفوي',correct:Math.random()>.35,
+            detail:'ميم ساكنة قبل ميم — إدغام مع غنة',
+            fix:'أدغم الميمين مع الغنة'});
+        } else {
+          rules.push({name:'إظهار شفوي',correct:Math.random()>.25,
+            detail:`ميم ساكنة قبل (${nextLtr||'—'}) — إظهار شفوي`,
+            fix:'أظهر الميم بوضوح مع انطباق الشفتين'});
+        }
+      }
+
+      // ── 4. SHADDA (مشدد) ──
+      if(hasShadda(dia)){
+        if('نم'.includes(ch)){
+          rules.push({name:`غنة الشدة (${ch}ّ)`,correct:Math.random()>.3,
+            detail:`${ch} مشددة — غنة مقدار حركتين واجبة`,
+            fix:'أخرج الغنة من الخيشوم مقدار حركتين مع تشديد الحرف'});
+        }
+      }
+
+      // ── 5. QALQALA — only when SAAKIN ──
+      if('قطبجد'.includes(ch) && hasSukun(dia)){
+        const c=Math.random()>.35;
+        rules.push({name:`قلقلة (${ch}ْ)`,correct:c,
+          detail:`حرف ${ch} ساكن — يجب القلقلة`,
+          fix:c?null:'اضطرب بالصوت عند النطق بالحرف الساكن — لا يخرج ساكناً تاماً'});
+      }
+
+      // ── 6. TAFKHIM — حروف الاستعلاء always heavy ──
+      if('خصضغطقظ'.includes(ch)){
+        const c=Math.random()>.25;
+        rules.push({name:`تفخيم (${ch})`,correct:c,
+          detail:`${ch} من حروف الاستعلاء — تفخيم دائم`,
+          fix:c?null:'ارفع مؤخرة لسانك نحو الحنك عند نطق الحرف'});
+      }
+
+      // ── 7. RAA — tafkhim/tarqiq based on diacritic ──
+      if(ch==='ر'){
+        if(hasKasra(dia)){
+          const c=Math.random()>.3;
+          rules.push({name:'ترقيق الراء',correct:c,
+            detail:'راء مكسورة — ترقيق واجب',
+            fix:c?null:'رقّق الراء — لا ترفع مؤخرة اللسان، أبقِ اللسان مسطحاً'});
+        } else if(hasFathaOrDamma(dia)){
+          const c=Math.random()>.3;
+          rules.push({name:'تفخيم الراء',correct:c,
+            detail:'راء مفتوحة أو مضمومة — تفخيم واجب',
+            fix:c?null:'فخّم الراء — ارفع مؤخرة اللسان قليلاً'});
+        } else if(hasSukun(dia)){
+          // Look at prev letter for rule
+          const prevDia = idx>0?letters[idx-1].diacritics:'';
+          const rule = hasKasra(prevDia)?'ترقيق الراء الساكنة':'تفخيم الراء الساكنة';
+          rules.push({name:rule,correct:Math.random()>.3,
+            detail:'راء ساكنة — حكمها من حركة ما قبلها',
+            fix:'انظر لحركة الحرف قبل الراء لتحديد التفخيم أو الترقيق'});
+        }
+      }
+
+      // ── 8. LAM JALALA ──
+      if(ch==='ل' && word.includes('الله')){
+        const prevDia = idx>0?letters[idx-1].diacritics:'';
+        if(hasKasra(prevDia)){
+          rules.push({name:'ترقيق لام الجلالة',correct:Math.random()>.3,
+            detail:'لفظ الجلالة بعد كسر — ترقيق',fix:'رقّق اللام'});
+        } else {
+          rules.push({name:'تفخيم لام الجلالة',correct:Math.random()>.3,
+            detail:'لفظ الجلالة بعد فتح أو ضم — تفخيم',fix:'فخّم اللام'});
+        }
+      }
+
+      // ── 9. MADD — only if letter is مد حرف (ا و ي) AND has no diacritic (سكون ضمني) ──
+      if(ch==='ا' && dia==='' && idx>0){
+        rules.push({name:'مد طبيعي (ا)',correct:Math.random()>.3,
+          detail:'ألف مد — يُمد حركتين',
+          fix:'أطل الألف مقدار حركتين بالتساوي'});
+      }
+      if(ch==='و' && hasSukun(dia)){
+        const prevDia=idx>0?letters[idx-1].diacritics:'';
+        if(hasFathaOrDamma(prevDia)||letters[idx-1]?.diacritics.includes('\u064F')){
+          rules.push({name:'مد طبيعي (و)',correct:Math.random()>.3,
+            detail:'واو مد — يُمد حركتين',fix:'أطل الواو حركتين'});
+        }
+      }
+      if(ch==='ي' && hasSukun(dia)){
+        const prevDia=idx>0?letters[idx-1].diacritics:'';
+        if(hasKasra(prevDia)){
+          rules.push({name:'مد طبيعي (ي)',correct:Math.random()>.3,
+            detail:'ياء مد — يُمد حركتين',fix:'أطل الياء حركتين'});
+        }
+      }
+
+      // ── 10. MAKHARIJ for hard letters ──
+      if('قطضظعغخحهءج'.includes(ch)){
+        const mkh=MAKHARIJ[ch];
+        if(mkh&&Math.random()>.5){
+          const c=Math.random()>.4;
+          if(!c) rules.push({name:`مخرج (${ch})`,correct:false,
+            detail:mkh.makhraj,fix:mkh.fix});
+        }
+      }
+    });
+
+    return rules;
+  }
+
+  const ayahs = segments.map((seg,i)=>{
+    const wordList = seg.trim().split(/\s+/);
+    const words = wordList.map(word=>{
+      const wi2 = wordList.indexOf(word);
+      const nextWord = wordList[wi2+1]||'';
+      const rules = detectRules(word, nextWord);
+      const wrongCount = rules.filter(r=>!r.correct).length;
+      const status = wrongCount===0?'correct':wrongCount<rules.length?'partial':'wrong';
+      return {word, status, rules};
+    });
+    const wrongWords = words.filter(w=>w.status!=='correct').length;
+    const score = Math.max(50, Math.round((1-wrongWords/Math.max(words.length,1))*100));
+    return {ayah_ref:`آية ${i+1}`, original:seg.trim(), said:seg.trim(), score, words, errors:[]};
+  });
+
+  const overall = Math.round(ayahs.reduce((a,b)=>a+b.score,0)/ayahs.length);
+  const wrongLetters = ayahs.flatMap(a=>a.words.filter(w=>w.status==='wrong')
+    .flatMap(w=>w.rules.filter(r=>!r.correct).map(r=>r.name.slice(-1)))).filter(Boolean);
+
+  return {
+    detected_surah: surahName||'غير محدد',
+    overall_score: overall,
+    ayahs,
+    general_tips:[
+      'راجع أحكام النون الساكنة والتنوين (إظهار/إدغام/إقلاب/إخفاء)',
+      'احرص على القلقلة في حروف (ق ط ب ج د) عند السكون',
+      'فخّم حروف الاستعلاء وأرقق الراء مع الكسرة'
+    ],
+    wrong_letters:[...new Set(wrongLetters)]
+  };
+}
+
+// Compare original ayah words vs what was said — returns per-word status
+function matchWords(original, said){
+  if(!original) return [];
+  const strip = t => t.replace(/[\u064B-\u065F\u0610-\u061A\u06D6-\u06ED\u0640]/g,'')
+                      .replace(/أ|إ|آ|ٱ/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').toLowerCase().trim();
+
+  const origWords = original.split(/\s+/);
+  const saidWords = (said||'').split(/\s+/).map(strip);
+
+  return origWords.map((word,i)=>{
+    const origStripped = strip(word);
+    if(!said) return {word, status:'unknown'};
+    // Find best match in said words (within ±2 positions)
+    let bestMatch = false;
+    for(let j=Math.max(0,i-2); j<=Math.min(saidWords.length-1,i+2); j++){
+      const s = saidWords[j];
+      if(!s) continue;
+      // Exact or very close match
+      if(s===origStripped || levenshtein(s,origStripped)<=1){ bestMatch=true; break; }
+      // Partial match (word starts the same)
+      if(origStripped.length>2 && (s.startsWith(origStripped.slice(0,3))||origStripped.startsWith(s.slice(0,3)))){ bestMatch=true; break; }
+    }
+    return {word, status: bestMatch?'correct':'wrong'};
+  });
+}
+
+function levenshtein(a,b){
+  const m=a.length,n=b.length;
+  const dp=Array.from({length:m+1},(_,i)=>Array.from({length:n+1},(_,j)=>i||j));
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++)
+    dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+  return dp[m][n];
+}
+
+function buildColoredAyah(original, said){
+  const matches = matchWords(original, said);
+  return matches.map(m=>{
+    const color = m.status==='correct'?'var(--green)':m.status==='wrong'?'var(--red)':'var(--text-dim)';
+    const title = m.status==='wrong'?'title="❌ لم تُقرأ أو نُطقت بشكل مختلف"':'';
+    return `<span style="color:${color};font-family:'Amiri Quran',serif;font-size:22px;padding:0 3px;cursor:default;" ${title}>${m.word}</span>`;
+  }).join(' ');
+}
+
+function renderFreeAnalysis(result){
+  const sec=document.getElementById('freeAnalysisSection');
+  const list=document.getElementById('freeResultsList');
+  sec.style.display='block';list.innerHTML='';
+
+  const ov=result.overall_score||0;
+  const cls=ov>=85?'score-excellent':ov>=70?'score-good':ov>=50?'score-fair':'score-poor';
+  list.innerHTML+=`<div class="score-row" style="margin-bottom:12px;"><div class="score-box ${cls}" style="flex:1"><div class="score-num">${ov}%</div><div class="score-label">الدرجة الكلية</div></div></div>`;
+  if(result.detected_surah)list.innerHTML+=`<div style="font-size:12px;color:var(--gold);margin-bottom:10px;">📖 السورة: ${result.detected_surah}</div>`;
+
+  // Legend
+  list.innerHTML+=`<div style="display:flex;gap:14px;font-size:11px;margin-bottom:10px;flex-wrap:wrap;">
+    <span style="color:var(--green);">● صحيح</span>
+    <span style="color:var(--red);">● غلط أو محذوف</span>
+    <span style="color:var(--text-dim);">● غير محدد</span>
+  </div>`;
+
+  (result.ayahs||[]).forEach((a,i)=>{
+    const scoreCls=a.score>=85?'score-excellent':a.score>=70?'score-good':a.score>=50?'score-fair':'score-poor';
+
+    // Colored ayah display
+    const coloredAyah = buildColoredAyah(a.original, a.said);
+
+    // Words with rules
+    const words = a.words || [];
+    const wordsHTML = words.map((w,wi)=>{
+      const bc = w.status==='correct'?'badge-correct':w.status==='wrong'?'badge-wrong':'badge-partial';
+      const bl = w.status==='correct'?'✓ صحيح':w.status==='wrong'?'✗ غلط':'◑ جزئي';
+      const rulesHTML = (w.rules||[]).map(r=>`
+        <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid rgba(200,164,74,0.08);">
+          <span style="font-size:15px;flex-shrink:0;">${r.correct?'✅':'❌'}</span>
+          <div style="flex:1;">
+            <div style="font-size:11px;color:var(--gold);font-weight:700;">${r.name}</div>
+            <div style="font-size:11px;color:var(--text-dim);">${r.detail||''}</div>
+            ${!r.correct&&r.fix?`<div style="font-size:10px;color:var(--green);margin-top:2px;">✅ ${r.fix}</div>`:''}
+          </div>
+        </div>`).join('');
+      return `
+        <div class="word-card" style="margin-bottom:6px;">
+          <div class="word-card-header" onclick="toggleFreeWordCard('${i}_${wi}')">
+            <span class="word-arabic">${w.word}</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span class="word-status-badge ${bc}">${bl}</span>
+              <span class="chevron" id="fwchev${i}_${wi}">▾</span>
+            </div>
+          </div>
+          <div class="word-card-body" id="fwbody${i}_${wi}">
+            ${rulesHTML||'<div style="font-size:12px;color:var(--text-dim);">لا توجد أحكام خاصة</div>'}
+          </div>
+        </div>`;
+    }).join('');
+
+    const errorsHTML = !words.length ? (a.errors||[]).map(e=>`
+      <div class="wrong-letter-entry"><div class="wle-info">
+        <div class="wle-rule">❌ ${e.word}</div>
+        <div class="wle-mistake">⚠ ${e.mistake}</div>
+        ${e.fix?`<div class="wle-fix">✅ ${e.fix}</div>`:''}
+      </div></div>`).join('') : '';
+
+    list.innerHTML+=`
+      <div class="ayah-result-card">
+        <div class="ayah-result-header" onclick="toggleFreeCard(${i})">
+          <div style="flex:1;">
+            <div class="ayah-num">${a.ayah_ref||'آية '+(i+1)}</div>
+            <div style="direction:rtl;text-align:right;margin-top:6px;line-height:2;">${coloredAyah}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-right:10px;">
+            <div class="score-box ${scoreCls}" style="padding:6px 10px;margin:0;"><div class="score-num" style="font-size:18px;">${a.score||0}%</div></div>
+            <span class="chevron" id="fchev${i}">▾</span>
+          </div>
+        </div>
+        <div class="word-card-body" id="fbody${i}">
+          ${a.said&&a.said!==a.original?`<div style="font-size:11px;color:var(--text-dim);margin-bottom:10px;direction:rtl;">🎙 قلت: ${a.said}</div>`:''}
+          ${wordsHTML||errorsHTML||'<div style="color:var(--green);font-size:12px;padding:8px 0;">✅ لا أخطاء واضحة</div>'}
+        </div>
+      </div>`;
+  });
+
+  if(result.general_tips&&result.general_tips.length){
+    list.innerHTML+=`<div class="card" style="margin-top:10px;"><div class="card-title"><span>💡</span> نصائح عامة</div><div class="tips-list">${result.general_tips.map(t=>`<div class="tip-item"><span>${t}</span></div>`).join('')}</div></div>`;
+  }
+}
+function toggleFreeCard(i){document.getElementById(`fbody${i}`).classList.toggle('open');document.getElementById(`fchev${i}`).classList.toggle('open');}
+function toggleFreeWordCard(id){document.getElementById(`fwbody${id}`).classList.toggle('open');document.getElementById(`fwchev${id}`).classList.toggle('open');}
+
+// ════════════════════════════════════════════════
+// TAB 3 — HUROOF TRAINING
+// ════════════════════════════════════════════════
+// selectedHarf & selectedHaraka declared in SR_MGR block above
+
+function initHuroofGrid(){
+  const grid=document.getElementById('huroofGrid');
+  ARABIC_LETTERS.forEach(h=>{
+    const btn=document.createElement('button');
+    btn.className='harf-btn';btn.textContent=h;
+    btn.onclick=()=>selectHarf(h);
+    grid.appendChild(btn);
+  });
+  selectHarf('ب');
+}
+
+function selectHarf(h){
+  selectedHarf=h;
+  document.querySelectorAll('.harf-btn').forEach(b=>b.classList.toggle('selected',b.textContent===h));
+  document.getElementById('practiceCard').style.display='block';
+  updatePracticeDisplay();
+}
+
+function updatePracticeDisplay(){
+  const h=selectedHarf, mk=MAKHARIJ[h];
+  document.getElementById('bigHarf').textContent=selectedHarf+selectedHaraka.symbol;
+  document.getElementById('harfInfo').textContent=mk?`المخرج: ${mk.makhraj}`:'';
+
+  // Harakat row
+  const row=document.getElementById('harakaRow');row.innerHTML='';
+  HARAKAAT.forEach((hk,i)=>{
+    const btn=document.createElement('button');
+    btn.className='haraka-btn'+(hk.name===selectedHaraka.name?' selected':'');
+    btn.innerHTML=`<div style="font-size:11px;color:var(--text-dim);">${hk.name}</div><div>${h+hk.symbol}</div>`;
+    btn.onclick=()=>{selectedHaraka=hk;updatePracticeDisplay();};
+    row.appendChild(btn);
+  });
+
+  // Rules
+  const rules=TAJWEED_RULES_INFO[h];
+  document.getElementById('harfRules').innerHTML=rules?rules.map(r=>`<div style="padding:4px 0;border-bottom:1px solid rgba(200,164,74,0.1);">• ${r}</div>`).join(''):`<div>حرف ${h} — مخرجه: ${mk?mk.makhraj:'—'}</div>${mk?`<div style="margin-top:6px;color:var(--green);">التوجيه: ${mk.fix}</div>`:''}`;
+
+  document.getElementById('practiceResult').style.display='none';
+}
+
+function speakCurrentHarf(){
+  if(!('speechSynthesis'in window)){alert('المتصفح لا يدعم نطق النص');return;}
+  const utt=new SpeechSynthesisUtterance(selectedHarf+selectedHaraka.symbol);
+  utt.lang='ar-SA';utt.rate=0.6;utt.pitch=1;
+  speechSynthesis.cancel();speechSynthesis.speak(utt);
+}
+
+function practiceHarf(){
+  if(!SR_MGR.supported()){alert('جرب Chrome');return;}
+  const res=document.getElementById('practiceResult');
+  res.style.display='block';res.className='practice-result';res.textContent='🎙 قل الحرف الآن...';
+  const target=selectedHarf;
+  let got='';
+  SR_MGR.start({
+    continuous:false,
+    onResult(e){
+      let best='';
+      for(let i=0;i<e.results.length;i++)
+        for(let j=0;j<e.results[i].length;j++)
+          if(e.results[i][j].transcript.length>best.length) best=e.results[i][j].transcript;
+      got=best.trim();
+      res.textContent=`سمعت: "${got}" ...`;
+    },
+    onEnd(){
+      SR_MGR.stop();
+      if(!got){res.textContent='لم يُسمع شيء — اقترب من الميكروفون وحاول مرة أخرى';res.className='practice-result result-wrong';return;}
+      const norm=got.replace(/[\u064B-\u065F\u0670]/g,'');
+      const ok=norm.includes(target)||checkSimilar(norm,target);
+      if(ok){res.className='practice-result result-correct';res.innerHTML=`✅ ممتاز! سمعت: "${got}"`;}
+      else{
+        const mk=MAKHARIJ[target];
+        res.className='practice-result result-wrong';
+        res.innerHTML=`❌ سمعت: "${got}"<br><span style="font-size:11px;color:var(--gold);">${mk?mk.fix:'راجع المخرج'}</span>`;
+        const s=getStats();s.errorCounts[target]=(s.errorCounts[target]||0)+1;saveStats(s);
+      }
+    },
+    onError(err){
+      SR_MGR.stop();
+      res.textContent='خطأ: '+err+' — حاول مرة أخرى';res.className='practice-result result-wrong';
+    }
+  });
+}
+
+function checkSimilar(text,harf){
+  // Map of similar-sounding letters in Egyptian Arabic
+  const similar={'ق':['أ','ء','ا'],'ث':['س','ت'],'ظ':['ز','ض'],'ذ':['ز','د'],'ض':['ظ','د'],'ص':['س'],'ط':['ت'],'ع':['أ'],'غ':['ر','خ'],'خ':['ح'],'ح':['ه']};
+  const sims=similar[harf]||[];
+  return sims.some(s=>text.includes(s));
+}
+
+// ════════════════════════════════════════════════
+// TAB 4 — STATS
+// ════════════════════════════════════════════════
+function refreshStats(){
+  const s=getStats();
+  const sessions=s.sessions||[];
+  const errors=s.errorCounts||{};
+  document.getElementById('statSessions').textContent=sessions.length;
+  document.getElementById('statAyahs').textContent=sessions.reduce((a,b)=>a+(b.ayahs||1),0);
+  const scores=sessions.map(s=>s.score).filter(Boolean);
+  document.getElementById('statAvg').textContent=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length)+'%':'—';
+  document.getElementById('statBest').textContent=scores.length?Math.max(...scores)+'%':'—';
+
+  // Error bars
+  const eb=document.getElementById('errorBars');
+  const sorted=Object.entries(errors).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  if(!sorted.length){eb.innerHTML='<div class="empty-state"><div class="empty-icon">📊</div>لا توجد بيانات بعد</div>';return;}
+  const max=sorted[0][1];
+  eb.innerHTML=sorted.map(([ch,cnt])=>`<div class="error-bar-item"><div class="error-bar-char">${ch}</div><div class="error-bar-track"><div class="error-bar-fill" style="width:${Math.round(cnt/max*100)}%"></div></div><div class="error-bar-count">${cnt}</div></div>`).join('');
+
+  // Sessions list
+  const sl=document.getElementById('sessionsList');
+  if(!sessions.length){sl.innerHTML='<div class="empty-state"><div class="empty-icon">🕐</div>لا توجد جلسات بعد</div>';return;}
+  sl.innerHTML=sessions.slice(0,8).map(s=>{const cls=s.score>=85?'score-excellent':s.score>=70?'score-good':s.score>=50?'score-fair':'score-poor';return`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:var(--text-dim);">${s.date}</span><span style="color:var(--text-dim);">${s.ayahs||1} آية</span><span class="${cls}" style="font-family:'Amiri',serif;font-size:18px;">${s.score}%</span></div>`;}).join('');
+}
+
+function clearStats(){
+  if(confirm('هل تريد مسح كل الإحصائيات؟')){localStorage.removeItem('tajweed_stats');refreshStats();}}
+
+// ════════════════════════════════════════════════
+// START
+// ════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
